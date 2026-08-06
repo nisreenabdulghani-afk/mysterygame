@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Who Is the Killer? — The Vital Signs Investigation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --ink-navy:#12181e;
+  --ink-navy-2:#1a222a;
+  --panel:#1e2830;
+  --kraft:#c9a876;
+  --kraft-dark:#9f7f52;
+  --parchment:#f3ead9;
+  --parchment-2:#e9dcc2;
+  --teal:#4fa89b;
+  --teal-dim:#2f6a61;
+  --alert:#d1453b;
+  --alert-dim:#7a2b26;
+  --ok:#5fa876;
+  --text-lo:#e8e3d8;
+  --text-dim:#9aa6ac;
+  --gold:#d4af5a;
+  --focus:#f3ead9;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--ink-navy);
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(79,168,155,0.06), transparent 45%),
+    radial-gradient(circle at 85% 90%, rgba(209,69,59,0.05), transparent 45%);
+  color:var(--text-lo);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+}
+::selection{background:var(--gold);color:#1b1f24;}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 18px 80px;}
+
+/* ---------- HEADER ---------- */
+.case-header{
+  border:1px solid var(--kraft-dark);
+  background:linear-gradient(180deg, var(--panel), var(--ink-navy-2));
+  border-radius:6px;
+  padding:22px 24px 18px;
+  margin-bottom:18px;
+  position:relative;
+  overflow:hidden;
+}
+.case-header::before{
+  content:"CASE FILE";
+  position:absolute; top:10px; right:16px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:3px; color:var(--kraft-dark);
+}
+.case-number{
+  font-family:'JetBrains Mono',monospace;
+  color:var(--gold); font-size:12px; letter-spacing:2px; margin-bottom:6px;
+}
+h1.title{
+  font-family:'Special Elite',cursive;
+  font-size:clamp(24px,4vw,38px);
+  color:var(--parchment);
+  margin:0 0 6px;
+  letter-spacing:0.5px;
+  text-shadow:0 2px 0 rgba(0,0,0,0.3);
+}
+.subtitle{color:var(--text-dim);font-size:14.5px;max-width:760px;line-height:1.5;}
+.stamp{
+  display:inline-block; margin-top:12px;
+  font-family:'Special Elite',cursive;
+  color:var(--alert); border:2px solid var(--alert);
+  padding:4px 10px; border-radius:3px;
+  transform:rotate(-3deg);
+  font-size:13px; letter-spacing:2px;
+  opacity:0.85;
+}
+
+/* ---------- TABS ---------- */
+.tabs{
+  display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px;
+  border-bottom:2px solid var(--kraft-dark);
+  padding-bottom:0;
+}
+.tab-btn{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--panel);
+  color:var(--text-dim);
+  border:1px solid var(--kraft-dark);
+  border-bottom:none;
+  padding:10px 16px 9px;
+  border-radius:6px 6px 0 0;
+  cursor:pointer;
+  font-size:12.5px;
+  letter-spacing:0.5px;
+  transition:all .15s ease;
+  position:relative;
+  top:2px;
+}
+.tab-btn:hover{color:var(--parchment); background:var(--ink-navy-2);}
+.tab-btn.active{
+  background:var(--kraft); color:#1b1f24; font-weight:700;
+  top:0; border-color:var(--kraft);
+}
+.panel{display:none;animation:fadeIn .25s ease;}
+.panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+/* ---------- SECTION CARD ---------- */
+.section-card{
+  background:var(--panel);
+  border:1px solid #2c3841;
+  border-radius:8px;
+  padding:20px 22px;
+  margin-bottom:16px;
+}
+.section-card h2{
+  font-family:'Special Elite',cursive;
+  color:var(--gold);
+  font-size:19px;
+  margin:0 0 12px;
+  display:flex; align-items:center; gap:8px;
+}
+.section-card h3{
+  color:var(--parchment); font-size:14.5px; margin:16px 0 8px; font-weight:700;
+}
+.section-card p{line-height:1.6;color:var(--text-lo);font-size:14.5px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media (max-width:760px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+/* ---------- PATIENT PROFILE ---------- */
+.profile-box{
+  background:var(--parchment); color:#1b1f24; border-radius:6px;
+  padding:16px 18px; font-family:'JetBrains Mono',monospace; font-size:13px;
+  line-height:1.7; border:1px solid var(--kraft-dark);
+}
+.profile-box .row{display:flex; gap:8px; margin-bottom:4px;}
+.profile-box .lbl{color:var(--kraft-dark); font-weight:700; min-width:150px;}
+
+/* ---------- VITALS TABLE / CHART ---------- */
+.vitals-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12.5px;margin-top:8px;}
+.vitals-table th{
+  background:var(--ink-navy-2); color:var(--gold); text-align:left;
+  padding:8px 10px; border-bottom:2px solid var(--kraft-dark); font-size:11.5px; letter-spacing:0.5px;
+}
+.vitals-table td{padding:8px 10px; border-bottom:1px solid #2c3841;}
+.vitals-table tr:hover td{background:rgba(79,168,155,0.06);}
+.flag-abn{color:var(--alert); font-weight:700;}
+.flag-ok{color:var(--ok);}
+.chart-wrap{background:var(--ink-navy-2); border-radius:8px; padding:12px; margin-top:14px; border:1px solid #2c3841;}
+
+/* ---------- EVIDENCE BOARD ---------- */
+.corkboard{
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.03), transparent 30%),
+    #3a2f22;
+  border:10px solid #2a2118;
+  border-radius:6px;
+  padding:22px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:18px;
+}
+.evidence-card{
+  background:var(--parchment);
+  color:#1b1f24;
+  border-radius:2px;
+  padding:14px 14px 12px;
+  min-height:150px;
+  position:relative;
+  box-shadow:0 6px 14px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.4) inset;
+  transform:rotate(var(--r,0deg));
+  cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease;
+  font-family:'JetBrains Mono',monospace;
+}
+.evidence-card:hover{transform:rotate(0deg) translateY(-3px);box-shadow:0 10px 20px rgba(0,0,0,0.45);}
+.evidence-card::before{
+  content:"";
+  position:absolute; top:-9px; left:50%; transform:translateX(-50%);
+  width:16px;height:16px;border-radius:50%;
+  background:radial-gradient(circle at 30% 30%, #e33, #900);
+  box-shadow:0 2px 3px rgba(0,0,0,0.5);
+}
+.evidence-card .ev-num{
+  font-size:10.5px; color:var(--kraft-dark); letter-spacing:1px; font-weight:700;
+}
+.evidence-card .ev-title{
+  font-family:'Special Elite',cursive; font-size:15px; margin:4px 0 8px; color:#1b1f24; line-height:1.3;
+}
+.evidence-card .ev-preview{font-size:11.5px; color:#4a4032; line-height:1.5;}
+.evidence-card .ev-tag{
+  display:inline-block; margin-top:8px; font-size:10px; letter-spacing:1px;
+  padding:2px 7px; border-radius:3px; font-weight:700;
+}
+.tag-your{background:#ddd0b0;color:#5b4c30;}
+
+.evidence-detail{
+  display:none; margin-top:14px; background:var(--parchment); color:#1b1f24;
+  border-radius:6px; padding:18px 20px; border:2px dashed var(--kraft-dark);
+}
+.evidence-detail.active{display:block;animation:fadeIn .2s ease;}
+.evidence-detail h3{font-family:'Special Elite',cursive;color:#1b1f24;margin-top:0;}
+.evidence-detail .close-x{float:right;cursor:pointer;font-weight:700;color:var(--alert);font-family:'JetBrains Mono',monospace;}
+.reliability-row{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.reliability-row span{font-size:12px;color:#5b4c30;font-weight:700;}
+.rel-btn{
+  font-family:'JetBrains Mono',monospace; font-size:11.5px; padding:6px 12px;
+  border-radius:14px; border:1.5px solid var(--kraft-dark); background:transparent;
+  color:#5b4c30; cursor:pointer; transition:all .15s ease;
+}
+.rel-btn:hover{background:var(--kraft-dark);color:#fff;}
+.rel-btn.selected{background:#1b1f24;color:var(--parchment);border-color:#1b1f24;}
+
+/* ---------- SUSPECTS ---------- */
+.suspect-card{
+  background:var(--panel); border:1px solid #2c3841; border-radius:8px;
+  padding:18px 20px; margin-bottom:14px;
+}
+.suspect-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+.suspect-badge{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--teal-dim); color:var(--parchment);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Special Elite',cursive; font-size:18px; flex-shrink:0;
+  border:2px solid var(--gold);
+}
+.suspect-name{font-family:'Special Elite',cursive;font-size:18px;color:var(--parchment);}
+.suspect-role{color:var(--gold);font-size:12px;letter-spacing:1px;font-family:'JetBrains Mono',monospace;}
+.suspect-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+@media (max-width:700px){.suspect-grid{grid-template-columns:1fr;}}
+.suspect-field{background:var(--ink-navy-2);border-radius:6px;padding:10px 12px;border-left:3px solid var(--teal);}
+.suspect-field.motive{border-left-color:var(--alert);}
+.suspect-field.opportunity{border-left-color:var(--gold);}
+.suspect-field.alibi{border-left-color:var(--teal);}
+.suspect-field.evidence{border-left-color:var(--ok);}
+.suspect-field .fk{font-size:10.5px;letter-spacing:1.5px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-bottom:4px;}
+.suspect-field p{margin:0;font-size:13px;line-height:1.5;color:var(--text-lo);}
+.statement-box{
+  margin-top:12px; background:#20191280; background:rgba(201,168,118,0.08);
+  border-left:3px solid var(--kraft); padding:10px 14px; border-radius:4px;
+  font-style:italic; color:var(--parchment); font-size:13.5px; line-height:1.55;
+}
+
+/* ---------- QUESTIONS ---------- */
+.think-q{
+  background:rgba(212,175,90,0.08); border:1px solid rgba(212,175,90,0.35);
+  border-radius:6px; padding:10px 14px; margin-bottom:8px; font-size:13.5px;
+  color:var(--parchment); display:flex; gap:10px;
+}
+.think-q .qn{color:var(--gold);font-weight:700;font-family:'JetBrains Mono',monospace;flex-shrink:0;}
+
+/* ---------- AI DETECTIVE ---------- */
+.chat-shell{
+  background:var(--ink-navy-2); border:1px solid #2c3841; border-radius:8px;
+  display:flex; flex-direction:column; height:480px; overflow:hidden;
+}
+.chat-log{flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px;}
+.msg{max-width:80%; padding:10px 14px; border-radius:10px; font-size:14px; line-height:1.5;}
+.msg.det{background:var(--panel); border:1px solid var(--kraft-dark); align-self:flex-start; color:var(--text-lo);}
+.msg.det .who{color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;display:block;margin-bottom:4px;}
+.msg.user{background:var(--teal-dim); align-self:flex-end; color:#fff;}
+.msg.user .who{color:var(--parchment);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;display:block;margin-bottom:4px;opacity:0.8;}
+.typing{align-self:flex-start;color:var(--text-dim);font-size:13px;font-style:italic;padding:0 14px;}
+.chat-input-row{display:flex; gap:8px; padding:12px; border-top:1px solid #2c3841; background:var(--panel);}
+.chat-input-row input{
+  flex:1; background:var(--ink-navy); border:1px solid var(--kraft-dark); color:var(--text-lo);
+  border-radius:6px; padding:10px 12px; font-family:'Inter',sans-serif; font-size:14px;
+}
+.chat-input-row input:focus{border-color:var(--gold);}
+.chat-input-row button{
+  background:var(--gold); color:#1b1f24; border:none; border-radius:6px; padding:10px 18px;
+  font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; font-size:14px;
+}
+.chat-input-row button:disabled{opacity:0.5;cursor:not-allowed;}
+.quick-qs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0;}
+.quick-q-btn{
+  font-size:12px; background:transparent; border:1px solid var(--kraft-dark); color:var(--text-dim);
+  padding:6px 10px; border-radius:14px; cursor:pointer; font-family:'Inter',sans-serif;
+}
+.quick-q-btn:hover{background:var(--kraft-dark);color:#fff;}
+
+/* ---------- CASE REPORT FORM ---------- */
+.form-field{margin-bottom:16px;}
+.form-field label{display:block; font-size:13px; font-weight:700; color:var(--gold); margin-bottom:6px; font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;}
+.form-field .hint{color:var(--text-dim);font-size:12px;margin-bottom:6px;display:block;}
+select,textarea,input[type=text]{
+  width:100%; background:var(--ink-navy-2); border:1px solid #2c3841; color:var(--text-lo);
+  border-radius:6px; padding:10px 12px; font-family:'Inter',sans-serif; font-size:14px; resize:vertical;
+}
+select:focus,textarea:focus,input:focus{border-color:var(--gold);}
+textarea{min-height:80px;}
+.confidence-row{display:flex;align-items:center;gap:14px;}
+input[type=range]{flex:1;accent-color:var(--gold);}
+.conf-val{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--gold);min-width:56px;text-align:right;}
+.btn-primary{
+  background:var(--gold); color:#1b1f24; border:none; padding:12px 22px; border-radius:6px;
+  font-weight:700; cursor:pointer; font-size:14.5px;
+}
+.btn-secondary{
+  background:transparent; color:var(--text-lo); border:1px solid var(--kraft-dark); padding:12px 22px;
+  border-radius:6px; cursor:pointer; font-size:14.5px; margin-left:8px;
+}
+#reportOutput{display:none; margin-top:20px;}
+#reportOutput pre{
+  background:var(--parchment); color:#1b1f24; padding:18px 20px; border-radius:6px;
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.6; white-space:pre-wrap;
+  border:1px solid var(--kraft-dark);
+}
+
+/* misc */
+.tiny-note{font-size:12px;color:var(--text-dim);margin-top:6px;}
+.divider{height:1px;background:#2c3841;margin:18px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="case-header">
+    <div class="case-number">CASE No. HSC-2291 &nbsp;|&nbsp; STATUS: UNRESOLVED &nbsp;|&nbsp; UNIT: WARD 4B, POST-SURGICAL</div>
+    <h1 class="title">Who Is the Killer? — The Vital Signs Investigation</h1>
+    <p class="subtitle">A patient has died in the early hours of the morning under suspicious circumstances. You are the healthcare detective. Read the chart, question the suspects, weigh the evidence — and decide who, if anyone, is responsible.</p>
+    <div class="stamp">CONFIDENTIAL</div>
+  </div>
+
+  <div class="tabs" id="tabBar">
+    <button class="tab-btn active" data-tab="case">📁 Case File</button>
+    <button class="tab-btn" data-tab="chart">📈 Patient Chart</button>
+    <button class="tab-btn" data-tab="evidence">🗂 Evidence Board</button>
+    <button class="tab-btn" data-tab="suspects">🕵 Suspects</button>
+    <button class="tab-btn" data-tab="detective">💬 Interrogate the AI Detective</button>
+    <button class="tab-btn" data-tab="report">📝 Case Report</button>
+  </div>
+
+  <!-- ============ CASE FILE ============ -->
+  <div class="panel active" id="panel-case">
+    <div class="section-card">
+      <h2>Patient Profile</h2>
+      <div class="profile-box">
+        <div class="row"><span class="lbl">Name:</span><span>Edward Whitfield</span></div>
+        <div class="row"><span class="lbl">Age:</span><span>78</span></div>
+        <div class="row"><span class="lbl">Admitted for:</span><span>Elective right hip replacement (post-op day 2)</span></div>
+        <div class="row"><span class="lbl">Medical history:</span><span>Type 2 diabetes (diet-controlled); atrial fibrillation on warfarin; Chronic Kidney Disease Stage 3 (eGFR 38 mL/min — flagged on admission bloods)</span></div>
+        <div class="row"><span class="lbl">Allergies:</span><span>None known</span></div>
+        <div class="row"><span class="lbl">Analgesia plan:</span><span>Patient-Controlled Analgesia (PCA) — IV morphine, standard adult concentration, started 8:00pm post-op day 2</span></div>
+        <div class="row"><span class="lbl">Condition before decline:</span><span>Alert, orientated, pain reported as 4/10, mobilising with frame that afternoon</span></div>
+        <div class="row"><span class="lbl">Found:</span><span>Unresponsive in bed at 03:10, not breathing, no pulse detected. Resuscitation attempted. Pronounced at 03:41.</span></div>
+      </div>
+      <p class="tiny-note">Note the renal function flag (eGFR 38) — CKD Stage 3 reduces the body's ability to clear certain drugs. Keep this in mind as you review the medication evidence.</p>
+    </div>
+
+    <div class="section-card">
+      <h2>How to Investigate</h2>
+      <div class="grid-3">
+        <div>
+          <h3>1 · Read the Chart</h3>
+          <p>Study the vital signs over time. Identify exactly when things started going wrong — and which sign changed first.</p>
+        </div>
+        <div>
+          <h3>2 · Search the Evidence</h3>
+          <p>Ten items sit on the evidence board. Some are reliable. Some are misleading. Some are incomplete. Decide which is which — the game won't tell you.</p>
+        </div>
+        <div>
+          <h3>3 · Question Suspects</h3>
+          <p>Four people had contact with the patient. Compare each alibi against the evidence, not against how guilty they "seem."</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>Your Objective</h2>
+      <div class="think-q"><span class="qn">1</span> Identify every abnormal vital sign and explain what it suggests physiologically.</div>
+      <div class="think-q"><span class="qn">2</span> Link the pattern of changes to a probable underlying cause.</div>
+      <div class="think-q"><span class="qn">3</span> Evaluate the reliability of each piece of evidence — reliable, misleading, or incomplete?</div>
+      <div class="think-q"><span class="qn">4</span> Compare competing explanations and eliminate suspects using evidence, not assumption.</div>
+      <div class="think-q"><span class="qn">5</span> Write a final Case Report with a justified conclusion and a confidence level.</div>
+    </div>
+  </div>
+
+  <!-- ============ PATIENT CHART ============ -->
+  <div class="panel" id="panel-chart">
+    <div class="section-card">
+      <h2>Vital Signs Chart — Ward 4B Observations</h2>
+      <p>Normal adult reference ranges: Temp 36.1–37.2°C · Pulse 60–100 bpm · Respiratory Rate 12–20/min · BP ~120/80 mmHg · SpO₂ 95–100%.</p>
+      <div class="chart-wrap"><canvas id="vitalsCanvas" height="260"></canvas></div>
+      <table class="vitals-table">
+        <thead>
+          <tr><th>Time</th><th>Temp (°C)</th><th>Pulse (bpm)</th><th>Resp. Rate (/min)</th><th>BP (mmHg)</th><th>SpO₂ (%)</th><th>Recorded by / Note</th></tr>
+        </thead>
+        <tbody id="vitalsBody"></tbody>
+      </table>
+      <p class="tiny-note">Abnormal readings are marked in red. You decide what the trend means before checking the discussion questions below.</p>
+    </div>
+
+    <div class="section-card">
+      <h2>Discussion Questions</h2>
+      <div class="think-q"><span class="qn">Q</span> Which vital sign changed first — and why might that matter more than which one changed the most?</div>
+      <div class="think-q"><span class="qn">Q</span> Respiratory rate and oxygen saturation both fell steadily while temperature stayed almost normal. What does that combination point toward — infection, bleeding, or something else?</div>
+      <div class="think-q"><span class="qn">Q</span> At 01:00, RR was 9 and SpO₂ was 88%. On a standard early warning score, this should trigger an urgent review. What should have happened next — and did it?</div>
+      <div class="think-q"><span class="qn">Q</span> Compare the 01:00 reading to the 01:45 reading. What do you notice, and what might explain it?</div>
+    </div>
+  </div>
+
+  <!-- ============ EVIDENCE BOARD ============ -->
+  <div class="panel" id="panel-evidence">
+    <div class="section-card">
+      <h2>Evidence Board</h2>
+      <p>Click a card to examine it closely. For each one, decide: is it <strong>Reliable</strong>, <strong>Misleading</strong>, or <strong>Incomplete</strong>? Your ratings are for your own reasoning — record them in your Case Report.</p>
+      <div class="corkboard" id="corkboard"></div>
+      <div class="evidence-detail" id="evidenceDetail"></div>
+    </div>
+  </div>
+
+  <!-- ============ SUSPECTS ============ -->
+  <div class="panel" id="panel-suspects">
+    <div class="section-card">
+      <h2>Suspects</h2>
+      <p>Four people had contact with Edward Whitfield in the hours before his death. Read every statement against the evidence board — alibis are easy to state and harder to verify.</p>
+    </div>
+    <div id="suspectList"></div>
+  </div>
+
+  <!-- ============ AI DETECTIVE ============ -->
+  <div class="panel" id="panel-detective">
+    <div class="section-card">
+      <h2>Interrogate the AI Detective</h2>
+      <p>Detective Reyes has reviewed the same case file you have — but will <strong>not</strong> tell you the answer. Explain your theory, cite your evidence, and expect to be challenged.</p>
+      <div class="chat-shell">
+        <div class="chat-log" id="chatLog"></div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" placeholder="Tell the detective your theory, or ask a question..." autocomplete="off">
+          <button id="chatSend">Send</button>
+        </div>
+      </div>
+      <div class="quick-qs">
+        <button class="quick-q-btn" data-q="I think the nurse is responsible because he set up the PCA pump.">I suspect the nurse</button>
+        <button class="quick-q-btn" data-q="I think the son is responsible because he lied about when he left and has a financial motive.">I suspect the visitor</button>
+        <button class="quick-q-btn" data-q="I think the healthcare assistant is responsible because her charted vitals at 1:45am look copied.">I suspect the HCA</button>
+        <button class="quick-q-btn" data-q="I think the doctor's prescription didn't account for the patient's kidney function. Is that the strongest clue?">I suspect the prescription</button>
+        <button class="quick-q-btn" data-q="Which vital sign gives the strongest clue and why?">Ask: strongest clue?</button>
+        <button class="quick-q-btn" data-q="What additional information would help me be more confident in my conclusion?">Ask: what's missing?</button>
+      </div>
+      <p class="tiny-note">Detective Reyes is an AI character powered by Claude. It has been instructed never to reveal the solution — only to question your reasoning.</p>
+    </div>
+  </div>
+
+  <!-- ============ CASE REPORT ============ -->
+  <div class="panel" id="panel-report">
+    <div class="section-card">
+      <h2>File Your Case Report</h2>
+      <p>This is your final deliverable. Support every claim with evidence from the board, and be honest about what you're still unsure of.</p>
+
+      <div class="form-field">
+        <label>1 · Who do you believe is responsible?</label>
+        <select id="rpSuspect">
+          <option value="">— Select —</option>
+          <option>Priya Nair, Healthcare Assistant</option>
+          <option>Marcus Webb, Staff Nurse</option>
+          <option>Daniel Whitfield, Son / Visitor</option>
+          <option>Dr. Elena Kovacs, Junior Doctor (Prescriber)</option>
+          <option>Shared / systemic responsibility across more than one person</option>
+          <option>No one — this was an unavoidable medical event</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label>2 · Timeline of events</label>
+        <span class="hint">Lay out, in order, what happened from 8:00pm to 3:41am and who did what.</span>
+        <textarea id="rpTimeline" placeholder="e.g. 20:00 — PCA started by Nurse Webb per Dr. Kovacs' order..."></textarea>
+      </div>
+
+      <div class="form-field">
+        <label>3 · Analysis of vital signs</label>
+        <span class="hint">Which signs were abnormal, in what order did they change, and what does that pattern indicate medically?</span>
+        <textarea id="rpVitals" placeholder="e.g. Respiratory rate and SpO2 fell together while temperature and BP stayed relatively stable at first, which suggests..."></textarea>
+      </div>
+
+      <div class="form-field">
+        <label>4 · Evidence supporting your conclusion</label>
+        <textarea id="rpSupport" placeholder="Reference specific evidence cards by name."></textarea>
+      </div>
+
+      <div class="form-field">
+        <label>5 · Alternative explanations considered — and why you ruled them out (or didn't)</label>
+        <textarea id="rpAlt" placeholder="What else could explain the death? What evidence contradicts your main theory?"></textarea>
+      </div>
+
+      <div class="form-field">
+        <label>6 · Confidence level</label>
+        <div class="confidence-row">
+          <input type="range" id="rpConfidence" min="0" max="100" value="50">
+          <div class="conf-val" id="confVal">50%</div>
+        </div>
+        <span class="hint">Justify your number below — 100% should be rare in a real investigation.</span>
+        <textarea id="rpConfJust" placeholder="Why this level of confidence, and what would change your mind?"></textarea>
+      </div>
+
+      <button class="btn-primary" id="genReportBtn">Generate Case Report</button>
+      <button class="btn-secondary" id="clearReportBtn">Clear</button>
+
+      <div id="reportOutput">
+        <h3>Final Case Report — Preview</h3>
+        <pre id="reportText"></pre>
+        <button class="btn-secondary" id="downloadReportBtn">Download as .txt</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ================= DATA ================= */
+const vitals = [
+  {t:"20:00", temp:36.8, pulse:88, rr:16, bp:"132/78", spo2:97, note:"Nurse Webb — PCA started, patient comfortable, pain 3/10", abn:false},
+  {t:"22:00", temp:36.9, pulse:82, rr:15, bp:"128/76", spo2:96, note:"Nurse Webb — routine round", abn:false},
+  {t:"00:00", temp:36.7, pulse:76, rr:12, bp:"118/72", spo2:93, note:"HCA Nair — routine round", abn:"borderline"},
+  {t:"01:00", temp:36.5, pulse:68, rr:9,  bp:"106/64", spo2:88, note:"HCA Nair — 'patient sleeping, difficult to rouse'", abn:true},
+  {t:"01:45", temp:36.5, pulse:68, rr:9,  bp:"106/64", spo2:88, note:"HCA Nair — 'checked, no change' (identical to 01:00 entry)", abn:true},
+  {t:"03:10", temp:35.9, pulse:42, rr:4,  bp:"82/50",  spo2:71, note:"Found unresponsive — code called", abn:true},
+];
+
+const evidence = [
+  {n:1, title:"Vital Signs Observation Chart", tag:"Central evidence",
+   body:"Full nursing observation chart, 20:00–03:10. Shows a steady decline in respiratory rate and oxygen saturation over roughly 5 hours, with pulse, blood pressure and temperature falling later and more gently. Cross-reference with the Patient Chart tab.",
+   guide:"Ask yourself: is a slow, steady fall in RR and SpO2 more consistent with an infection, a bleed, or a sedating drug accumulating in the body?"},
+  {n:2, title:"Medication Administration Record (MAR)", tag:"Medication",
+   body:"Confirms IV morphine PCA was set up by Nurse Webb at 20:00 exactly as prescribed: loading dose 1mg, PCA bolus 1mg, 8-minute lockout, no background infusion. Pump settings checked and co-signed by a second nurse at handover, matching the written order precisely.",
+   guide:"If the nurse programmed the pump exactly as prescribed, does that clear him — or does it shift the question to whether the prescription itself was safe for this patient?"},
+  {n:3, title:"Doctor's Prescription / Post-Op Order", tag:"Prescription",
+   body:"Handwritten order from Dr. Kovacs, timed 19:05: 'PCA morphine, standard adult protocol, per hospital post-op analgesia guideline.' No dose reduction, no renal precaution, and no note referencing the patient's admission bloods, despite eGFR 38 (CKD Stage 3) being recorded on the same page of the chart.",
+   guide:"Morphine is partly cleared by the kidneys. What happens to a standard dose in someone whose kidneys clear drugs more slowly than average?"},
+  {n:4, title:"Medical History & Admission Bloods Summary", tag:"Patient history",
+   body:"Confirms Type 2 diabetes, atrial fibrillation on warfarin, and CKD Stage 3 with eGFR 38 mL/min, flagged by the lab as 'renal function reduced — review drug dosing' at 14:20 on the day of admission, two days before this order was written.",
+   guide:"This card alone doesn't accuse anyone. It becomes powerful only when compared against Evidence #3."},
+  {n:5, title:"Nurse Webb's Shift Notes (22:00)", tag:"Incomplete",
+   body:"Handwritten note: 'Pt comfortable, PCA in use, pain 3/10, obs stable, handed over to night HCA at 01:00.' Nothing unusual reported. Nurse's shift ended at 01:00, before the critical decline became obvious.",
+   guide:"This looks reassuring — but ask what it doesn't tell you. A note written before the crisis can't confirm or rule out anything that happened after it."},
+  {n:6, title:"HCA Nair's Rounding Sheet", tag:"Misleading / suspicious pattern",
+   body:"The 01:45 entry is numerically identical to the 01:00 entry (Temp 36.5, Pulse 68, RR 9, BP 106/64, SpO2 88) — down to the decimal. HCA Nair states she rechecked the patient and 'nothing had changed.'",
+   guide:"Identical readings 45 minutes apart are either a real coincidence, a sign vitals genuinely plateaued, or a sign they were copied rather than retaken. Does this evidence point to who caused the decline, or to who failed to catch it?"},
+  {n:7, title:"Visitor Sign-In / Sign-Out Log", tag:"Misleading / red herring",
+   body:"Daniel Whitfield (son) signed in 19:30, signed out 21:05. A hallway camera log shows a person matching his description re-entering the ward at 23:00 for approximately 10 minutes, which he did not mention in his statement.",
+   guide:"He clearly wasn't fully honest about his movements. But being untruthful about a visit is not the same as having the means to alter someone's medication. What could he have actually done during a 10-minute unsupervised visit — and does it match the timing of the decline?"},
+  {n:8, title:"Pharmacy Dispensing Record", tag:"Contested responsibility",
+   body:"Pharmacy dispensed the standard-concentration morphine cartridge against Dr. Kovacs' order. The dispensing system automatically attached a flag: 'Renal function eGFR 38 — dose review recommended,' timestamped 19:40. No response or amendment was logged before the cartridge was sent to the ward at 19:55.",
+   guide:"A warning was generated and, it appears, not acted on. Whose job was it to act on it — the prescriber, the pharmacist, or both? What would you need to know about hospital protocol to decide?"},
+  {n:9, title:"Roommate's Witness Statement", tag:"Incomplete",
+   body:"The patient in the next bed recalls 'a beeping sound, like a monitor alarm' around 01:00–01:15, but assumed it was 'just the machines doing their normal thing' and did not call for help.",
+   guide:"Does this corroborate the timeline on the observation chart, or add new information? Note what it cannot tell you: which monitor, or why no staff member responded."},
+  {n:10, title:"Preliminary Toxicology / Post-Mortem Note", tag:"Central evidence",
+   body:"Blood morphine and morphine-metabolite levels are elevated beyond the expected range for the prescribed dose and time elapsed, consistent with reduced renal clearance causing drug accumulation rather than a dosing or programming error at the bedside.",
+   guide:"This is the closest thing to a scientific verdict in the file. Which of your suspects does this evidence support — and which does it clear?"},
+];
+
+const suspects = [
+  {
+    name:"Priya Nair", role:"Healthcare Assistant, age 26 — night shift", initial:"PN",
+    motive:"No personal motive against the patient. Ward was short-staffed that night; she was covering observations for 14 patients alone.",
+    opportunity:"Last person confirmed to check on the patient before he was found, at 01:00 and again at 01:45.",
+    alibi:"States she rechecked full observations at 01:45 and 'nothing had changed' from the 01:00 reading.",
+    evidenceNote:"Her 01:45 entry is numerically identical to the 01:00 entry — see Evidence #6. She has no access to prescribing or pump programming.",
+    statement:"\"I was covering the whole bay by myself. I checked him at one and he was sleepy but breathing. When I came back I looked at him, he seemed the same, so I wrote the same numbers. I know how that looks now. I should have used the machine again, not gone off memory.\""
+  },
+  {
+    name:"Marcus Webb", role:"Staff Nurse, age 41 — evening shift", initial:"MW",
+    motive:"The patient's family had made an informal complaint about his 'brusque manner' earlier that week — a possible resentment motive, though thin.",
+    opportunity:"Programmed and started the PCA pump at 20:00; on shift until 01:00, handover to HCA Nair.",
+    alibi:"States he set up the pump exactly per Dr. Kovacs' written order and had it double-checked at handover.",
+    evidenceNote:"MAR (Evidence #2) confirms his settings matched the prescription precisely. No discrepancy has been found in his practice.",
+    statement:"\"I set that pump up by the book. Standard concentration, standard lockout, nothing off-protocol. If something was wrong with that dose for him, that's not a programming problem — that's a prescribing one. I'm not being thrown under the bus for following an order correctly.\""
+  },
+  {
+    name:"Daniel Whitfield", role:"Son / Visitor, age 52", initial:"DW",
+    motive:"Stands to inherit a controlling share of the family business and estate. Witnesses recall a heated argument with his father days earlier about a care-home decision and the family will.",
+    opportunity:"Alone with his father 19:30–21:05, and again for roughly 10 unsupervised minutes around 23:00 — a visit he did not disclose.",
+    alibi:"Initially claimed he left at 21:05 and did not return that night.",
+    evidenceNote:"Sign-out log and hallway camera contradict his stated timeline (Evidence #7). He has no clinical training and no access to the PCA pump's controlled settings, which require a nurse's key and code.",
+    statement:"\"Fine — I came back. I'd forgotten his phone charger and he was already asleep, so I grabbed it and left, maybe ten minutes, tops. I didn't touch any machine, I wouldn't know how. I didn't want to bring up the argument because I knew how it would sound. I didn't kill my father.\""
+  },
+  {
+    name:"Dr. Elena Kovacs", role:"Junior Doctor, covering post-surgical ward overnight", initial:"EK",
+    motive:"No personal motive. Was covering 12 patients solo overnight and wrote the analgesia order quickly between other urgent calls.",
+    opportunity:"Wrote the PCA morphine order at 19:05, the same page of the chart on which the patient's reduced renal function (eGFR 38) was already recorded from admission bloods two days earlier.",
+    alibi:"States she followed 'standard hospital protocol' for post-operative analgesia and was not specifically alerted to the renal flag at the time of prescribing.",
+    evidenceNote:"The prescription (Evidence #3) shows no renal dose adjustment. The pharmacy system did generate a renal-function warning at dispensing (Evidence #8), but it is unclear whether this reached her before the cartridge went to the ward. Toxicology (Evidence #10) is consistent with drug accumulation due to reduced clearance rather than an administration error.",
+    statement:"\"I prescribe PCA morphine dozens of times a month using the standard protocol — that's what it's there for. If his kidneys needed a lower dose, that should have been flagged to me clearly, not buried in a chart I'm reading between five other emergencies. I didn't ignore a warning. I never saw one reach me directly.\""
+  }
+];
+
+/* ================= RENDER: VITALS TABLE + CHART ================= */
+function abnClass(sign,val){
+  return sign==='ok' ? 'flag-ok' : 'flag-abn';
+}
+function renderVitals(){
+  const body = document.getElementById('vitalsBody');
+  body.innerHTML = vitals.map(v=>{
+    const rrCls = v.rr<12 ? 'flag-abn' : 'flag-ok';
+    const spo2Cls = v.spo2<95 ? 'flag-abn' : 'flag-ok';
+    const pulseCls = (v.pulse<60||v.pulse>100) ? 'flag-abn' : 'flag-ok';
+    const tempCls = (v.temp<36.1||v.temp>37.2) ? 'flag-abn' : 'flag-ok';
+    return `<tr>
+      <td>${v.t}</td>
+      <td class="${tempCls}">${v.temp}</td>
+      <td class="${pulseCls}">${v.pulse}</td>
+      <td class="${rrCls}">${v.rr}</td>
+      <td>${v.bp}</td>
+      <td class="${spo2Cls}">${v.spo2}</td>
+      <td>${v.note}</td>
+    </tr>`;
+  }).join('');
+}
+function renderChart(){
+  const ctx = document.getElementById('vitalsCanvas');
+  new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: vitals.map(v=>v.t),
+      datasets:[
+        {label:'Resp. Rate (/min)', data:vitals.map(v=>v.rr), borderColor:'#d1453b', backgroundColor:'#d1453b', tension:0.3, borderWidth:2.5},
+        {label:'SpO2 (%)', data:vitals.map(v=>v.spo2), borderColor:'#4fa89b', backgroundColor:'#4fa89b', tension:0.3, borderWidth:2.5},
+        {label:'Pulse (bpm)', data:vitals.map(v=>v.pulse), borderColor:'#d4af5a', backgroundColor:'#d4af5a', tension:0.3, borderWidth:2, borderDash:[4,3]},
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{ legend:{labels:{color:'#e8e3d8', font:{family:'JetBrains Mono', size:11}}} },
+      scales:{
+        x:{ ticks:{color:'#9aa6ac'}, grid:{color:'#2c3841'} },
+        y:{ ticks:{color:'#9aa6ac'}, grid:{color:'#2c3841'} }
+      }
+    }
+  });
+}
+
+/* ================= RENDER: EVIDENCE ================= */
+function renderEvidence(){
+  const board = document.getElementById('corkboard');
+  board.innerHTML = evidence.map((e,i)=>{
+    const rot = (i%2===0? -2: 2) + (i%3===0?1:-1);
+    return `<div class="evidence-card" style="--r:${rot}deg" data-idx="${i}">
+      <div class="ev-num">EVIDENCE #${e.n}</div>
+      <div class="ev-title">${e.title}</div>
+      <div class="ev-preview">${e.body.slice(0,70)}…</div>
+      <span class="ev-tag tag-your" id="evtag-${i}">Not yet rated</span>
+    </div>`;
+  }).join('');
+  board.querySelectorAll('.evidence-card').forEach(card=>{
+    card.addEventListener('click', ()=> openEvidence(parseInt(card.dataset.idx)));
+  });
+}
+let ratings = {};
+function openEvidence(i){
+  const e = evidence[i];
+  const det = document.getElementById('evidenceDetail');
+  det.innerHTML = `
+    <span class="close-x" id="closeEv">✕ CLOSE</span>
+    <h3>Evidence #${e.n} — ${e.title}</h3>
+    <p style="line-height:1.6;">${e.body}</p>
+    <p style="font-style:italic;color:#6b5c3c;margin-top:10px;">${e.guide}</p>
+    <div class="reliability-row">
+      <span>Your rating:</span>
+      <button class="rel-btn" data-r="Reliable" data-i="${i}">Reliable</button>
+      <button class="rel-btn" data-r="Misleading" data-i="${i}">Misleading</button>
+      <button class="rel-btn" data-r="Incomplete" data-i="${i}">Incomplete</button>
+    </div>`;
+  det.classList.add('active');
+  det.scrollIntoView({behavior:'smooth', block:'nearest'});
+  document.getElementById('closeEv').onclick = ()=> det.classList.remove('active');
+  det.querySelectorAll('.rel-btn').forEach(b=>{
+    if(ratings[i]===b.dataset.r) b.classList.add('selected');
+    b.addEventListener('click', ()=>{
+      ratings[i]=b.dataset.r;
+      det.querySelectorAll('.rel-btn').forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');
+      const tag = document.getElementById(`evtag-${i}`);
+      tag.textContent = "You rated: " + b.dataset.r;
+    });
+  });
+}
+
+/* ================= RENDER: SUSPECTS ================= */
+function renderSuspects(){
+  const wrap = document.getElementById('suspectList');
+  wrap.innerHTML = suspects.map(s=>`
+    <div class="suspect-card">
+      <div class="suspect-head">
+        <div class="suspect-badge">${s.initial}</div>
+        <div>
+          <div class="suspect-name">${s.name}</div>
+          <div class="suspect-role">${s.role}</div>
+        </div>
+      </div>
+      <div class="suspect-grid">
+        <div class="suspect-field motive"><div class="fk">MOTIVE</div><p>${s.motive}</p></div>
+        <div class="suspect-field opportunity"><div class="fk">OPPORTUNITY</div><p>${s.opportunity}</p></div>
+        <div class="suspect-field alibi"><div class="fk">ALIBI</div><p>${s.alibi}</p></div>
+        <div class="suspect-field evidence"><div class="fk">EVIDENCE TO WEIGH</div><p>${s.evidenceNote}</p></div>
+      </div>
+      <div class="statement-box">${s.statement}</div>
+    </div>
+  `).join('');
+}
+
+/* ================= TABS ================= */
+document.getElementById('tabBar').addEventListener('click', e=>{
+  const btn = e.target.closest('.tab-btn');
+  if(!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+});
+
+/* ================= AI DETECTIVE CHAT ================= */
+const CASE_CONTEXT = `
+You are "Detective Reyes," a sharp, warm, Socratic AI character inside a Health & Social Care classroom mystery game called "Who Is the Killer? The Vital Signs Investigation."
+
+FULL CASE FILE (for your reference only — students see this same information across other tabs):
+Patient: Edward Whitfield, 78, post-op day 2 hip replacement. History: Type 2 diabetes, AFib on warfarin, CKD Stage 3 (eGFR 38, flagged on admission bloods two days before death). PCA IV morphine (standard adult protocol) started 20:00 by Nurse Marcus Webb, prescribed 19:05 by Dr. Elena Kovacs with no renal dose adjustment despite the eGFR flag being on the same chart page. Pharmacy dispensed the cartridge with an automatic renal-function warning flag at 19:40 that was not clearly acted upon.
+
+Vital signs trend: 20:00 T36.8 P88 RR16 BP132/78 SpO2 97 (normal) -> 22:00 T36.9 P82 RR15 BP128/76 SpO2 96 (normal) -> 00:00 T36.7 P76 RR12 BP118/72 SpO2 93 (borderline) -> 01:00 T36.5 P68 RR9 BP106/64 SpO2 88 (abnormal - should trigger urgent escalation) -> 01:45 T36.5 P68 RR9 BP106/64 SpO2 88 (identical to 01:00 - HCA Priya Nair charted this, raising suspicion she didn't actually recheck) -> 03:10 found unresponsive T35.9 P42 RR4 BP82/50 SpO2 71, pronounced 03:41.
+
+This pattern (progressive fall in RR and SpO2, relatively preserved temperature, gradually falling pulse/BP) is classic opioid-induced respiratory depression from drug accumulation, NOT infection or major bleeding.
+
+Toxicology: elevated morphine metabolites beyond expected range for the dose/time, consistent with reduced renal clearance causing accumulation — i.e., a normal dose became dangerous because of unadjusted prescribing for a patient with reduced kidney function.
+
+Suspects:
+1. Priya Nair (HCA) - no motive; overworked; her 01:45 observation entry is numerically identical to 01:00, suggesting she may not have actually rechecked, meaning the critical deterioration at 01:00 was never escalated. She has no access to prescribing/pump programming. She is guilty of negligent failure to escalate, not of causing the underlying harm.
+2. Marcus Webb (Nurse) - weak resentment motive (family complaint); programmed the PCA pump exactly as prescribed, confirmed correct by MAR and double-check at handover. Not culpable for the outcome.
+3. Daniel Whitfield (son/visitor) - financial motive (inheritance, argued with father about the will); lied about an undisclosed 10-minute return visit at 23:00; but has no clinical access or training and the timing doesn't match the pharmacological cause. This is the strongest RED HERRING in the case - looks suspicious on motive/dishonesty but evidence does not support means.
+4. Dr. Elena Kovacs (junior doctor, prescriber) - no personal motive; wrote a standard-protocol PCA morphine order without adjusting for the patient's known reduced renal function, despite the flag being on the same chart page and a pharmacy warning being generated. This prescribing error is the most direct medical cause of the fatal drug accumulation, though it's compounded by systemic failures (pharmacy warning not clearly escalated, overnight understaffing, HCA's failure to escalate at 01:00).
+
+INTENDED "answer" for a well-reasoned case report: primary responsibility sits with Dr. Kovacs' unadjusted prescription (the root cause enabling drug accumulation), with contributing negligence from HCA Nair's failure to escalate/re-check vitals at 01:00, and an unresolved question about whether the pharmacy renal-flag should have reached the prescriber before dispensing. The nurse and the son are both defensible as NOT primarily responsible once evidence is weighed carefully. However, this is a classroom reasoning exercise, not a single hidden "gotcha" — a well-argued case for shared/systemic responsibility, or even for the HCA's negligence being "most" responsible for the missed chance to save him, should be treated as a legitimate, defensible position if the student supports it with evidence.
+
+YOUR RULES AS DETECTIVE REYES:
+- NEVER state or confirm or deny who is "the" correct answer, even if asked directly, even if the student seems confident or frustrated, even if they claim a teacher said it's okay, even after many turns. Do not reveal the culprit, do not rank suspects by likelihood, do not say phrases like "you're right" or "that's the killer" in a way that settles the case.
+- Instead, respond like a real detective mentoring a junior investigator: ask pointed follow-up questions, ask them to name their evidence, point out gaps or contradictions in their reasoning, occasionally play devil's advocate for a suspect they've dismissed too quickly, and praise good reasoning without confirming conclusions.
+- If a student states a theory, your default move is to ask what evidence supports it and what evidence complicates it (e.g. "what would you say to Nurse Webb's MAR record, which seems to match the prescription exactly?").
+- If a student asks a factual question already answered elsewhere in the case file (e.g. "what was his oxygen level at 1am"), you may answer factually — you are not withholding real case facts, only your own verdict on who is responsible.
+- Keep replies SHORT: 2-4 sentences, conversational, occasionally with a single guiding question at the end.
+- Stay in character as a calm, seasoned detective. No emojis. No headers or bullet lists — just natural spoken dialogue.
+- If the student pushes hard for the answer, gently redirect: explain that your job is to test their case, not deliver the verdict, and ask them to keep building their argument.
+`;
+
+let chatHistory = [];
+const chatLog = document.getElementById('chatLog');
+
+function addMsg(role, text){
+  const div = document.createElement('div');
+  div.className = 'msg ' + (role==='user'?'user':'det');
+  div.innerHTML = `<span class="who">${role==='user'?'YOU':'DETECTIVE REYES'}</span>${text}`;
+  chatLog.appendChild(div);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+function addTyping(){
+  const div = document.createElement('div');
+  div.className='typing';
+  div.id='typingIndicator';
+  div.textContent = 'Detective Reyes is thinking...';
+  chatLog.appendChild(div);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+function removeTyping(){
+  const t = document.getElementById('typingIndicator');
+  if(t) t.remove();
+}
+
+async function sendToDetective(userText){
+  addMsg('user', escapeHtml(userText));
+  chatHistory.push({role:'user', content:userText});
+  document.getElementById('chatSend').disabled = true;
+  addTyping();
+  try{
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: CASE_CONTEXT,
+        messages: chatHistory
+      })
+    });
+    const data = await resp.json();
+    removeTyping();
+    let text = "";
+    if(data && data.content){
+      text = data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    }
+    if(!text){ text = "I need a moment — could you rephrase that for me?"; }
+    addMsg('det', escapeHtml(text));
+    chatHistory.push({role:'assistant', content:text});
+  }catch(err){
+    removeTyping();
+    addMsg('det', "I'm having trouble hearing you over the ward noise — try asking that again.");
+  }
+  document.getElementById('chatSend').disabled = false;
+}
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.getElementById('chatSend').addEventListener('click', ()=>{
+  const inp = document.getElementById('chatInput');
+  const val = inp.value.trim();
+  if(!val) return;
+  inp.value='';
+  sendToDetective(val);
+});
+document.getElementById('chatInput').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ document.getElementById('chatSend').click(); }
+});
+document.querySelectorAll('.quick-q-btn').forEach(b=>{
+  b.addEventListener('click', ()=> sendToDetective(b.dataset.q));
+});
+
+// opening line
+addMsg('det', "Detective Reyes here. I've walked the ward, read the chart, and heard from all four of them. I won't hand you my conclusion — but tell me, where does your investigation stand so far?");
+
+/* ================= CASE REPORT ================= */
+document.getElementById('rpConfidence').addEventListener('input', e=>{
+  document.getElementById('confVal').textContent = e.target.value + '%';
+});
+document.getElementById('genReportBtn').addEventListener('click', ()=>{
+  const suspect = document.getElementById('rpSuspect').value || '[not selected]';
+  const timeline = document.getElementById('rpTimeline').value || '[not completed]';
+  const vitalsA = document.getElementById('rpVitals').value || '[not completed]';
+  const support = document.getElementById('rpSupport').value || '[not completed]';
+  const alt = document.getElementById('rpAlt').value || '[not completed]';
+  const conf = document.getElementById('rpConfidence').value;
+  const confJust = document.getElementById('rpConfJust').value || '[not completed]';
+
+  const ratedList = Object.keys(ratings).map(i=>`  - Evidence #${evidence[i].n} (${evidence[i].title}): rated ${ratings[i]}`).join('\n') || '  (no evidence rated yet)';
+
+  const text = `CASE HSC-2291 — FINAL CASE REPORT
+Patient: Edward Whitfield, 78 — Ward 4B, Post-Surgical
+
+1. CONCLUSION — RESPONSIBLE PARTY
+${suspect}
+
+2. TIMELINE OF EVENTS
+${timeline}
+
+3. ANALYSIS OF VITAL SIGNS
+${vitalsA}
+
+4. EVIDENCE SUPPORTING CONCLUSION
+${support}
+
+Evidence reliability ratings recorded during investigation:
+${ratedList}
+
+5. ALTERNATIVE EXPLANATIONS CONSIDERED
+${alt}
+
+6. CONFIDENCE LEVEL: ${conf}%
+Justification: ${confJust}
+
+— End of report —`;
+
+  document.getElementById('reportText').textContent = text;
+  document.getElementById('reportOutput').style.display = 'block';
+  document.getElementById('reportOutput').scrollIntoView({behavior:'smooth'});
+});
+document.getElementById('clearReportBtn').addEventListener('click', ()=>{
+  ['rpTimeline','rpVitals','rpSupport','rpAlt','rpConfJust'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('rpSuspect').value='';
+  document.getElementById('rpConfidence').value=50;
+  document.getElementById('confVal').textContent='50%';
+  document.getElementById('reportOutput').style.display='none';
+});
+document.getElementById('downloadReportBtn').addEventListener('click', ()=>{
+  const blob = new Blob([document.getElementById('reportText').textContent], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'case-report-HSC-2291.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ================= INIT ================= */
+renderVitals();
+renderChart();
+renderEvidence();
+renderSuspects();
+</script>
+</body>
+</html>
